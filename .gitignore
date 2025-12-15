@@ -1,0 +1,36 @@
+# Byte-code files
+*.pyc
+__pycache__/
+
+# Virtual environment
+venv/
+.venv/
+env/
+.env/
+
+# IDE and editor files
+.idea/           # JetBrains (PyCharm)
+.vscode/         # Visual Studio Code
+
+# Operating system files
+.DS_Store        # macOS
+Thumbs.db        # Windows
+
+# Test and coverage files
+.coverage
+.pytest_cache/
+
+# Runtime and log files
+*.log
+*.sqlite3
+
+# Distribution and packaging
+dist/
+build/
+*.egg-info/
+
+# db
+*.db-*
+
+# testing
+app-*
