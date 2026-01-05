@@ -16,11 +16,11 @@ USER_AGENTS = [
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.3 Safari/605.1.15'
 ]
-LIMIT_PER_HOUR = 40
+LIMIT_PER_HOUR = 30
 LIMIT_PER_DAY = 180
-DELAY_MIN = 23
-DELAY_MAX = 67
-IG_SESSION_USER = "username_akun_dummy"
+DELAY_MIN = 41
+DELAY_MAX = 97
+IG_SESSION_USER = "syiar_mu"
 
 # GLOBAL STATE
 scan_status = {'status': 'Idle', 'last_log': 'System ready', 'next_run': 'Now'}
@@ -54,14 +54,14 @@ class RateLimiter:
 limiter = RateLimiter()
 
 def calculate_word_freq(source_name):
-    posts = Post.query.filter_by(source=source_name).order_by(Post.id.desc()).limit(100).with_entities(Post.title).all()
+    posts = Post.query.filter_by(source=source_name).order_by(Post.id.desc()).with_entities(Post.title).all()
     if not posts: return [], []
     text_combined = " ".join([p.title for p in posts if p.title]).lower()
     text_combined = re.sub(r'https?://\S+|www\.\S+', '', text_combined) 
     text_combined = re.sub(r'\d+', '', text_combined)     
     text_combined = re.sub(r'[^\w\s]', '', text_combined) 
     words = text_combined.split()
-    stopwords = set(['para','terus','dan', 'yang', 'di', 'ke', 'dari', 'ini', 'itu', 'untuk', 'pada', 'dengan', 'adalah', 'sebagai', 'karena', 'oleh', 'muhammadiyah', 'pwm', 'pimpinan', 'wilayah', 'daerah', 'cabang', 'ranting', 'kota', 'kabupaten', 'dalam', 'atas', 'bagi', 'juga', 'bisa', 'ada', 'tidak', 'saat', 'akan', 'atau', 'kami', 'kita', 'saya', 'anda', 'link', 'bio', 'klik', 'profil', 'kegiatan', 'bersama', 'selamat', 'tahun', 'hari', 'tanggal', '2024', '2025', 'https', 'http', 'read', 'more', 'post', 'posted', 'by', 'admin', 'news', 'berita', 'update', 'terbaru', 'caption', 'recent', 'posts', 'more', 'view', 'video', 'foto', 'reels', 'selengkapnya', 'assalamualaikum', 'waalaikumsalam', 'warahmatullahi', 'wabarakatuh', 'yogyakarta', 'surakarta', 'jakarta', 'indonesia', 'resmi', 'official','telah','setiap','harus','hingga','sampai','serta','semoga','mari','seluruh','lebih','melalui','setiap','jadi','menjadi','baru','semua','dapat','mereka','kini','kepada','masih','menuju','bukan','agar','hanya','tapi','setiap','saudarasaudara','belum','ketika','segera','secara'])
+    stopwords = set(['beri','berikan','sebut','diri','tetapi','saja','sekadar','segini','para','terus','dan', 'yang', 'di', 'ke', 'dari', 'ini', 'itu', 'untuk', 'pada', 'dengan', 'adalah', 'sebagai', 'karena', 'oleh', 'muhammadiyah', 'pwm', 'pimpinan', 'wilayah', 'daerah', 'cabang', 'ranting', 'kota', 'kabupaten', 'dalam', 'atas', 'bagi', 'juga', 'bisa', 'ada', 'tidak', 'saat', 'akan', 'atau', 'kami', 'kita', 'saya', 'anda', 'link', 'bio', 'klik', 'profil', 'kegiatan', 'bersama', 'selamat', 'tahun', 'hari', 'tanggal', '2024', '2025', 'https', 'http', 'read', 'more', 'post', 'posted', 'by', 'admin', 'news', 'berita', 'update', 'terbaru', 'caption', 'recent', 'posts', 'more', 'view', 'video', 'foto', 'reels', 'selengkapnya', 'assalamualaikum', 'waalaikumsalam', 'warahmatullahi', 'wabarakatuh', 'yogyakarta', 'surakarta', 'jakarta', 'indonesia', 'resmi', 'official','telah','setiap','harus','hingga','sampai','serta','semoga','mari','seluruh','lebih','melalui','setiap','jadi','menjadi','baru','semua','dapat','mereka','kini','kepada','masih','menuju','bukan','agar','hanya','tapi','setiap','saudarasaudara','belum','ketika','segera','secara','jangan','tersebut','sudah','tertentu','sebanyak','tetap','apakah','merupakan'])
     filtered_words = [w for w in words if w not in stopwords and len(w) > 3]
     most_common = Counter(filtered_words).most_common(100) 
     if not most_common: return [], []
@@ -105,41 +105,76 @@ def scrape_instagram_safe(org_id, url):
             db.session.add_all(added)
             db.session.commit()
         return len(added), "OK"
-    except Exception as e: return 0, str(e)[:50]
+    except Exception as e: return 0, str(e)[:200]
 
 def scrape_website(org_id, url):
     try:
         scraper = cloudscraper.create_scraper()
         resp = scraper.get(url, timeout=20)
+        
         if resp.status_code == 200:
             soup = BeautifulSoup(resp.text, 'html.parser')
-            candidates = soup.find_all(['h2', 'h3','h4','h5','h6'], limit=20)
             
-            # 1. Ambil URL yang sudah ada (Optimasi)
+            # PERUBAHAN 1: Kita cari Heading (h1-h6) DAN tag 'a' sekaligus
+            candidates = soup.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'a'], limit=50)
+            
             existing_urls = {
                 res.url for res in db.session.query(Post.url).filter_by(org_id=org_id).all()
             }
 
             added = []
             for tag in candidates:
-                text = tag.get_text().strip()
-                link_tag = tag.find('a')
-                if link_tag and link_tag.get('href'):
-                    link = link_tag.get('href')
-                    # Normalisasi Link (Penting agar tidak dianggap beda padahal sama)
+                link = None
+                text = ""
+
+                # --- LOGIKA A: Struktur Standar (<h2><a href="...">Judul</a></h2>) ---
+                if tag.name.startswith('h'):
+                    a_tag = tag.find('a')
+                    if a_tag:
+                        link = a_tag.get('href')
+                        text = a_tag.get_text().strip()
+                        # Kadang text ada di h2, bukan di a
+                        if not text: text = tag.get_text().strip()
+
+                # --- LOGIKA B: Struktur Modern (<a class="h5 title">Judul</a>) ---
+                elif tag.name == 'a':
+                    # Ambil daftar class dari tag <a> tersebut
+                    css_classes = tag.get('class', []) # Mengembalikan list, misal ['h5', 'card-title']
+                    
+                    # Jika tidak punya class, kemungkinan besar bukan judul (cuma link biasa)
+                    if not css_classes:
+                        continue
+                        
+                    # Gabung class jadi string agar mudah dicek
+                    class_str = " ".join(css_classes).lower()
+                    
+                    # Cek Kata Kunci: Apakah class mengandung indikator judul?
+                    # Kita cari 'h5', 'h4', 'title', 'headline', 'post'
+                    is_title_candidate = any(x in class_str for x in ['h1','h2','h3','h4','h5','h6', 'title', 'headline', 'news-link'])
+                    
+                    if is_title_candidate:
+                        link = tag.get('href')
+                        text = tag.get_text().strip()
+
+                # --- PROSES VALIDASI & SIMPAN (Sama seperti sebelumnya) ---
+                if link and text:
+                    # Normalisasi Link
                     if not link.startswith('http'): 
                         base = "{0.scheme}://{0.netloc}".format(urlparse(url))
                         link = base.rstrip('/') + '/' + link.lstrip('/')
                     
-                    # 2. Cek Duplikasi
-                    if len(text) > 10 and link not in existing_urls:
-                        added.append(Post(org_id=org_id, source='Website', title=text, url=link))
-                        existing_urls.add(link)
+                    # Filter Kualitas
+                    if len(text) > 15 and link not in existing_urls:
+                        # Membersihkan text dari newlines berlebih
+                        clean_title = " ".join(text.split())
+                        added.append(Post(org_id=org_id, source='Website', title=clean_title, url=link))
+                        existing_urls.add(link) # Cegah duplikat di loop yg sama
 
             if added:
                 db.session.add_all(added)
                 db.session.commit()
             return len(added), "OK"
+            
     except Exception as e: return 0, str(e)[:50]
     return 0, "Failed"
 
@@ -171,7 +206,7 @@ def worker_loop(app_instance):
                 target.last_scraped_at = datetime.now(timezone.utc)
                 db.session.commit()
                 scan_status['last_log'] = f"Done {target.name}. Web: {w_msg}, IG: {i_msg}"
-                time.sleep(random.randint(30, 60))
+                time.sleep(random.randint(DELAY_MIN, DELAY_MAX))
             except Exception as e:
-                print(f"Worker Error: {e}"); db.session.rollback(); time.sleep(60)
+                print(f"Worker Error: {e}"); db.session.rollback(); time.sleep(DELAY_MAX)
             finally: db.session.remove()

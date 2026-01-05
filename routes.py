@@ -39,8 +39,13 @@ def map_data():
     recent = datetime.now(timezone.utc) - timedelta(hours=12)
     for org in orgs:
         has_new = ActivityLog.query.filter_by(org_id=org.id).filter(ActivityLog.scraped_at >= recent, ActivityLog.post_count > 0).first() is not None
+        latest_web = Post.query.filter_by(org_id=org.id, source='Website').order_by(Post.id.desc()).first()
+        latest_ig = Post.query.filter_by(org_id=org.id, source='Instagram').order_by(Post.id.desc()).first()
         if org.latitude and org.longitude:
-            data.append({"id": org.id, "name": org.name, "lat": org.latitude, "lng": org.longitude, "has_new": has_new, "web": org.website_link, "ig": org.instagram_link})
+            data.append({"id": org.id, "name": org.name, "lat": org.latitude, "lng": org.longitude, "has_new": has_new, "web": org.website_link, "ig": org.instagram_link, 
+            'web_title': latest_web.title[:30] + '...' if latest_web else '-', 'web_url': latest_web.url if latest_web else '#',
+            'ig_title': latest_ig.title[:30] + '...' if latest_ig else '-', 'ig_url': latest_ig.url if latest_ig else '#'
+            })
     return jsonify(data)
 
 @main.route('/api/chart_data')

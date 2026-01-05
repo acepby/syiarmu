@@ -123,7 +123,7 @@ function updateMap() {
             var icon;
             // Logic icon Anda...
             if (org.has_new) {
-                icon = L.divIcon({ className: 'ping-wrapper', html: '<div class="ping-inner"></div>', iconSize: [6, 6], iconAnchor: [3, 3] });
+                icon = L.divIcon({ className: 'ping-wrapper', html: '<div class="ping-inner"></div>', iconSize: [20, 20], iconAnchor: [10, 10] });
             } else { 
                  // Logic Edukasi / Muh Icon Anda disalin kesini
                  const edu =['universitas','politeknik','akademi','sekolah'];
@@ -140,7 +140,8 @@ function updateMap() {
             // --- LANGKAH C: Buat Marker ---
             // PENTING: Jangan pakai .addTo() di sini dulu
             var marker = L.marker([org.lat, org.lng], {icon: icon}); 
-            marker.bindPopup(`<b>${org.name}</b><br>...`);
+            marker.bindPopup(`<b>${org.name}</b><br>latest web : <a href="${org.web_url}" target="_blank">${org.web_title }</a><br>
+            latest IG :<a href="${org.ig_url }" target="_blank">${org.ig_title }</a><br><button class="btn btn-sm btn-outline-primary" onclick="showDetail(${org.id}, '${ org.name }')">📊 Detail</button>`);
 
             // --- LANGKAH D: Pisahkan Jalur Masuk (Logic Utama) ---
             if (org.has_new) {
@@ -209,7 +210,7 @@ function updateMap() {
             orgChartInstance = new Chart(document.getElementById('orgChart').getContext('2d'), { type: 'bar', data: { labels: data.chart.dates, datasets: [{ label: 'Web', data: data.chart.web, backgroundColor: 'blue' }, { label: 'IG', data: data.chart.ig, backgroundColor: '#E1306C' }] }, options: { scales: { x: { stacked: true }, y: { stacked: true } } } });
         });
     }
-    setInterval(function(){ $.get("/api/status", function(data){ $("#worker-status").text(data.scan.status); $("#worker-log").text(data.scan.last_log); $("#limit-h").text(data.limits.hourly); }); }, 2000);
+    setInterval(function(){ $.get("/api/status", function(data){ $("#worker-status").text(data.scan.status); $("#worker-log").text(data.scan.last_log); $("#limit-h").text(data.limits.hourly); $("#limit-d").text(data.limits.daily); }); }, 2000);
 </script>
 </body>
 </html>

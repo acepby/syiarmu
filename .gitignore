@@ -19,7 +19,8 @@ Thumbs.db        # Windows
 # Test and coverage files
 .coverage
 .pytest_cache/
-
+*.save
+lensamu/
 # Runtime and log files
 *.log
 *.sqlite3

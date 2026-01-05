@@ -1,8 +1,8 @@
 import instaloader
 
 # GANTI DENGAN AKUN TUMBAL/DUMMY ANDA
-USER = "sheep.633618"
-PASS = "Muh5y@!r"
+USER = "syiar_mu"
+PASS = r"}s%nY-y#Cu7u+jx"
 
 L = instaloader.Instaloader()
 
