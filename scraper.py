@@ -98,7 +98,7 @@ def scrape_instagram_safe(org_id, url):
             if post_url not in existing_urls:
                 caption = post.caption if post.caption else "No Caption"
                 title = (caption[:400] + '..') if len(caption) > 400 else caption
-                added.append(Post(org_id=org_id, source='Instagram', title=title, url=post_url))
+                added.append(Post(org_id=org_id, source='Instagram', title=title, url=post_url, fetched_at=post.date_utc))
                 existing_urls.add(post_url) # Tambahkan ke set sementara agar tidak duplikat di loop yang sama
         
         if added:

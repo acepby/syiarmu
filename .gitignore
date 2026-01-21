@@ -32,6 +32,6 @@ build/
 
 # db
 *.db-*
-
+*.db
 # testing
 app-*
